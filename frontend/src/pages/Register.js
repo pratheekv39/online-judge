@@ -29,9 +29,9 @@ function Register() {
     <div className="container mt-5">
       <h2>Register</h2>
       <form onSubmit={handleSubmit}>
-        <input className="form-control mb-2" type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
-        <input className="form-control mb-2" type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
-        <select className="form-control mb-2" value={role} onChange={e => setRole(e.target.value)}>
+        <input id="register-email" name="email" className="form-control mb-2" type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
+        <input id="register-password" name="password" className="form-control mb-2" type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
+        <select id="register-role" name="role" className="form-control mb-2" value={role} onChange={e => setRole(e.target.value)}>
           <option value="user">User</option>
           <option value="admin">Admin</option>
         </select>

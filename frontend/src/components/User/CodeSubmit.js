@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-function CodeSubmit({ problem }) {
+function CodeSubmit({ problem, onSubmission }) {
   const [code, setCode] = useState('');
   const [language, setLanguage] = useState('cpp');
   const [verdict, setVerdict] = useState('');
@@ -11,11 +11,15 @@ function CodeSubmit({ problem }) {
     e.preventDefault();
     setVerdict('Running...');
     setDetails('');
+    const token = localStorage.getItem('token');
     const res = await axios.post('http://localhost:5000/api/submit', {
       code, language, problemId: problem._id
+    }, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
     setVerdict(res.data.verdict);
     setDetails(res.data.details || '');
+    if (onSubmission) onSubmission(res.data.verdict);
   };
 
   return (

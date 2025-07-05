@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -7,9 +7,23 @@ import AdminDashboard from './components/Admin/AdminDashboard';
 import UserDashboard from './components/User/UserDashboard';
 
 function App() {
-  // You can use context or localStorage for auth/role, here is a simple example:
-  const isLoggedIn = !!localStorage.getItem('token');
-  const role = localStorage.getItem('role'); // 'admin' or 'user'
+  const [authState, setAuthState] = useState({
+    isLoggedIn: !!localStorage.getItem('token'),
+    role: localStorage.getItem('role')
+  });
+
+  // Listen for storage changes (when user logs in/out in another tab)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setAuthState({
+        isLoggedIn: !!localStorage.getItem('token'),
+        role: localStorage.getItem('role')
+      });
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   return (
     <Router>
@@ -19,11 +33,11 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route
           path="/admin"
-          element={isLoggedIn && role === 'admin' ? <AdminDashboard /> : <Navigate to="/login" />}
+          element={authState.isLoggedIn && authState.role === 'admin' ? <AdminDashboard /> : <Navigate to="/login" />}
         />
         <Route
           path="/user"
-          element={isLoggedIn && role === 'user' ? <UserDashboard /> : <Navigate to="/login" />}
+          element={authState.isLoggedIn && authState.role === 'user' ? <UserDashboard /> : <Navigate to="/login" />}
         />
       </Routes>
     </Router>
