@@ -2,6 +2,11 @@ const mongoose = require('mongoose');
 const ProblemSchema = new mongoose.Schema({
   title: String,
   description: String,
+  difficulty: {
+    type: String,
+    enum: ['Easy', 'Medium', 'Hard'],
+    required: true
+  },
   testCases: [
     {
       input: String,
@@ -9,4 +14,8 @@ const ProblemSchema = new mongoose.Schema({
     }
   ]
 });
-module.exports = mongoose.model('Problem', ProblemSchema); 
+
+module.exports = {
+  Problem: mongoose.model('Problem', ProblemSchema),
+  ProblemSchema
+}; 
