@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, Chip, Typography, Box } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 function ProblemList() {
   const [problems, setProblems] = useState([]);
@@ -22,18 +24,31 @@ function ProblemList() {
     fetchProblems();
   };
 
+  const getChipColor = (difficulty) => {
+    if (difficulty === 'Easy') return 'success';
+    if (difficulty === 'Medium') return 'warning';
+    if (difficulty === 'Hard') return 'error';
+    return 'default';
+  };
+
   return (
-    <div>
-      <h4>Problems</h4>
-      <ul className="list-group">
+    <Box sx={{ p: 2, boxShadow: 2, borderRadius: 2, bgcolor: 'background.paper' }}>
+      <Typography variant="h5" gutterBottom>Problems</Typography>
+      <List>
         {problems.map(p => (
-          <li key={p._id} className="list-group-item d-flex justify-content-between align-items-center">
-            <span>{p.title}</span>
-            <button className="btn btn-danger btn-sm" onClick={() => handleDelete(p._id)}>Delete</button>
-          </li>
+          <ListItem key={p._id} secondaryAction={
+            <IconButton edge="end" aria-label="delete" onClick={() => handleDelete(p._id)}>
+              <DeleteIcon />
+            </IconButton>
+          }>
+            <ListItemText
+              primary={p.title}
+              secondary={<Chip label={p.difficulty} color={getChipColor(p.difficulty)} size="small" />}
+            />
+          </ListItem>
         ))}
-      </ul>
-    </div>
+      </List>
+    </Box>
   );
 }
 

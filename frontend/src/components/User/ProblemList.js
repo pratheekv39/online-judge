@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import CodeSubmit from './CodeSubmit';
+import { List, ListItem, ListItemText, IconButton, Chip, Typography, Box, CircularProgress, Paper, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import LightbulbIcon from '@mui/icons-material/Lightbulb';
+
+const HUGGINGFACE_API_KEY = process.env.REACT_APP_HF_API_KEY;
 
 function ProblemList() {
   const [problems, setProblems] = useState([]);
@@ -8,21 +14,22 @@ function ProblemList() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [solved, setSolved] = useState([]);
+  const [hintOpen, setHintOpen] = useState(false);
+  const [hintText, setHintText] = useState('');
+  const [hintLoading, setHintLoading] = useState(false);
 
   useEffect(() => {
     fetchProblems();
-    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
-    // Fetch solved problems whenever the component mounts or when token changes
     const token = localStorage.getItem('token');
     if (token) {
       fetchSolved();
     } else {
       setSolved([]);
     }
-  }, []); // This will run on mount and when token changes
+  }, []);
 
   const fetchProblems = async () => {
     setLoading(true);
@@ -30,12 +37,10 @@ function ProblemList() {
     try {
       const res = await axios.get('http://localhost:5000/api/problems');
       setProblems(res.data);
-      console.log('Fetched problems:', res.data);
       setLoading(false);
     } catch (err) {
       setError('Failed to load problems.');
       setLoading(false);
-      console.error('ProblemList fetch error:', err);
     }
   };
 
@@ -50,35 +55,91 @@ function ProblemList() {
         headers: { Authorization: `Bearer ${token}` }
       });
       setSolved(res.data.solved || []);
-      console.log('Fetched solved problems:', res.data.solved);
     } catch (err) {
-      console.error('Error fetching solved problems:', err);
       setSolved([]);
     }
   };
 
-  if (loading) return <div>Loading problems...</div>;
-  if (error) return <div className="text-danger">{error}</div>;
-  if (!problems.length) return <div>No problems found. Please ask admin to add problems.</div>;
+  const getChipColor = (difficulty) => {
+    if (difficulty === 'Easy') return 'success';
+    if (difficulty === 'Medium') return 'warning';
+    if (difficulty === 'Hard') return 'error';
+    return 'default';
+  };
+
+  const handleHint = async (problem) => {
+    setHintOpen(true);
+    setHintText('');
+    setHintLoading(true);
+    try {
+      const response = await axios.post(
+        'https://api-inference.huggingface.co/models/facebook/bart-large-cnn',
+        { inputs: `Give a hint for this problem: ${problem.description}` },
+        { headers: { Authorization: `Bearer ${HUGGINGFACE_API_KEY}` } }
+      );
+      setHintText(response.data && response.data.length ? response.data[0].summary_text || JSON.stringify(response.data) : 'No hint available.');
+    } catch (err) {
+      setHintText('Failed to fetch hint.');
+    }
+    setHintLoading(false);
+  };
+
+  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
+  if (error) return <Typography color="error">{error}</Typography>;
+  if (!problems.length) return <Typography>No problems found. Please ask admin to add problems.</Typography>;
 
   return (
-    <div>
-      <h4>Problems</h4>
-      <ul className="list-group">
+    <Paper sx={{ p: 3, boxShadow: 3, borderRadius: 3, bgcolor: 'background.paper', mt: 3 }}>
+      <Typography variant="h5" gutterBottom>Problems</Typography>
+      <List sx={{ width: '100%' }}>
         {problems.map(p => (
-          <li key={p._id} className="list-group-item d-flex justify-content-between align-items-center">
-            <span>
-              {p.title}
-              {solved.includes(p._id) && <span className="badge bg-success ms-2">Solved</span>}
-            </span>
-            <button className="btn btn-primary btn-sm" onClick={() => setSelected(p)}>Solve</button>
-          </li>
+          <ListItem
+            key={p._id}
+            sx={{
+              mb: 2,
+              borderRadius: 2,
+              boxShadow: 1,
+              transition: 'box-shadow 0.2s',
+              '&:hover': { boxShadow: 4, bgcolor: 'grey.50' }
+            }}
+            secondaryAction={
+              <Box>
+                <Tooltip title="Get a hint">
+                  <IconButton color="warning" onClick={() => handleHint(p)} sx={{ mr: 1 }}>
+                    <LightbulbIcon />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Solve">
+                  <IconButton color="primary" onClick={() => setSelected(p)}>
+                    <PlayArrowIcon />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            }
+          >
+            <ListItemText
+              primary={<Box sx={{ fontWeight: 500 }}>{p.title}</Box>}
+              secondary={<>
+                <Chip label={p.difficulty} color={getChipColor(p.difficulty)} size="small" sx={{ mr: 1 }} />
+                {solved.includes(p._id) && <Chip icon={<CheckCircleIcon />} label="Solved" color="success" size="small" />}
+              </>}
+            />
+          </ListItem>
         ))}
-      </ul>
+      </List>
       {selected && <CodeSubmit problem={selected} onSubmission={(verdict) => {
         if (verdict === 'Accepted') fetchSolved();
       }} />}
-    </div>
+      <Dialog open={hintOpen} onClose={() => setHintOpen(false)}>
+        <DialogTitle>Problem Hint</DialogTitle>
+        <DialogContent>
+          {hintLoading ? <CircularProgress /> : <Typography>{hintText}</Typography>}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setHintOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+    </Paper>
   );
 }
 
