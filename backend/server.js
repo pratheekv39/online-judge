@@ -92,11 +92,12 @@ app.post('/api/submit', async (req, res) => {
       }
 
       // Run against all test cases
-      let verdict = 'Accepted';
-      let details = '';
       (async function runTests() {
+        let passed = 0;
+        let details = [];
         try {
-          for (const tc of testCases) {
+          for (let i = 0; i < testCases.length; i++) {
+            const tc = testCases[i];
             try {
               const result = await new Promise((resolve, reject) => {
                 const child = exec(`"${exePath}"`, { timeout: 3000 }, (err, stdout, stderr) => {
@@ -106,25 +107,66 @@ app.post('/api/submit', async (req, res) => {
                 child.stdin.write(tc.input);
                 child.stdin.end();
               });
-              if (normalizeOutput(result) !== normalizeOutput(tc.expectedOutput)) {
-                verdict = 'Wrong Answer';
-                details = `Input: ${tc.input}\nExpected: ${tc.expectedOutput}\nGot: ${result}`;
-                break;
+              if (normalizeOutput(result) === normalizeOutput(tc.expectedOutput)) {
+                passed++;
+                if (i < 2) {
+                  details.push({
+                    index: i + 1,
+                    input: tc.input,
+                    expected: tc.expectedOutput,
+                    got: result
+                  });
+                } else {
+                  details.push({
+                    index: i + 1,
+                    hidden: true
+                  });
+                }
+              } else {
+                if (i < 2) {
+                  details.push({
+                    index: i + 1,
+                    input: tc.input,
+                    expected: tc.expectedOutput,
+                    got: result
+                  });
+                } else {
+                  details.push({
+                    index: i + 1,
+                    hidden: true
+                  });
+                }
               }
             } catch (err) {
-              verdict = 'Runtime Error';
-              details = err.toString();
-              break;
+              if (i < 2) {
+                details.push({
+                  index: i + 1,
+                  input: tc.input,
+                  expected: tc.expectedOutput,
+                  got: err.toString(),
+                  runtimeError: true
+                });
+              } else {
+                details.push({
+                  index: i + 1,
+                  hidden: true
+                });
+              }
             }
           }
         } catch (err) {
-          verdict = 'Internal Error';
-          details = err.toString();
+          details.push({ error: err.toString() });
           console.error('Error during test execution:', err);
         } finally {
           // Cleanup
           try { fs.unlinkSync(codePath); } catch {}
           try { if (fs.existsSync(exePath)) fs.unlinkSync(exePath); } catch {}
+          let verdict = '';
+          if (passed === testCases.length) {
+            verdict = 'Accepted';
+          } else {
+            verdict = `${passed}/${testCases.length} test cases passed`;
+          }
           if (userId) await Submission.create({ userId, problemId, verdict });
           try {
             res.json({ verdict, details });

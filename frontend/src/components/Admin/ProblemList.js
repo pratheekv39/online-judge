@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, Chip, Typography, Box } from '@mui/material';
+import { List, ListItem, ListItemText, IconButton, Chip, Typography, Box, Dialog } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import ProblemForm from './ProblemForm';
 
 function ProblemList() {
   const [problems, setProblems] = useState([]);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editProblem, setEditProblem] = useState(null);
 
   useEffect(() => {
     fetchProblems();
@@ -24,6 +28,17 @@ function ProblemList() {
     fetchProblems();
   };
 
+  const handleEdit = (problem) => {
+    setEditProblem(problem);
+    setEditOpen(true);
+  };
+
+  const handleEditClose = (updated) => {
+    setEditOpen(false);
+    setEditProblem(null);
+    if (updated) fetchProblems();
+  };
+
   const getChipColor = (difficulty) => {
     if (difficulty === 'Easy') return 'success';
     if (difficulty === 'Medium') return 'warning';
@@ -37,9 +52,14 @@ function ProblemList() {
       <List>
         {problems.map(p => (
           <ListItem key={p._id} secondaryAction={
-            <IconButton edge="end" aria-label="delete" onClick={() => handleDelete(p._id)}>
-              <DeleteIcon />
-            </IconButton>
+            <>
+              <IconButton edge="end" aria-label="edit" onClick={() => handleEdit(p)} sx={{ mr: 1 }}>
+                <EditIcon />
+              </IconButton>
+              <IconButton edge="end" aria-label="delete" onClick={() => handleDelete(p._id)}>
+                <DeleteIcon />
+              </IconButton>
+            </>
           }>
             <ListItemText
               primary={p.title}
@@ -48,6 +68,11 @@ function ProblemList() {
           </ListItem>
         ))}
       </List>
+      <Dialog open={editOpen} onClose={() => handleEditClose(false)} maxWidth="md" fullWidth>
+        {editProblem && (
+          <ProblemForm editData={editProblem} onClose={handleEditClose} />
+        )}
+      </Dialog>
     </Box>
   );
 }

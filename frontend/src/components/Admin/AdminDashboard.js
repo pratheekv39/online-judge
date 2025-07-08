@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProblemForm from './ProblemForm';
 import ProblemList from './ProblemList';
+import { Box, Typography, Button, Paper } from '@mui/material';
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -13,16 +14,16 @@ function AdminDashboard() {
   };
 
   return (
-    <div className="container mt-5">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>Admin Dashboard</h2>
-        <button className="btn btn-outline-danger" onClick={handleLogout}>
+    <Box sx={{ mt: 5, mx: 'auto', maxWidth: 900 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Typography variant="h4">Admin Dashboard</Typography>
+        <Button variant="outlined" color="error" onClick={handleLogout}>
           Logout
-        </button>
-      </div>
+        </Button>
+      </Box>
       <ProblemForm />
       <ProblemList />
-    </div>
+    </Box>
   );
 }
 

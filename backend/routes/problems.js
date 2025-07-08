@@ -24,6 +24,17 @@ router.delete('/:id', async (req, res) => {
   res.json({ message: 'Deleted' });
 });
 
+// Update a problem (admin only, but for now no auth middleware)
+router.put('/:id', async (req, res) => {
+  const { title, description, testCases, difficulty } = req.body;
+  const updated = await Problem.findByIdAndUpdate(
+    req.params.id,
+    { title, description, testCases, difficulty },
+    { new: true }
+  );
+  res.json(updated);
+});
+
 function getUserIdFromReq(req) {
   const auth = req.headers.authorization;
   if (!auth) return null;
