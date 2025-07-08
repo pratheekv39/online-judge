@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { Box, Typography, TextField, Button, MenuItem, Alert, Paper, List, ListItem, ListItemText, Divider } from '@mui/material';
 
-function CodeSubmit({ problem, onSubmission }) {
+function CodeSubmit({ problem, onSubmission, refreshStats }) {
   const [code, setCode] = useState('');
   const [language, setLanguage] = useState('cpp');
   const [verdict, setVerdict] = useState('');
@@ -24,6 +24,9 @@ function CodeSubmit({ problem, onSubmission }) {
     setVerdict(res.data.verdict);
     setDetails(res.data.details || []);
     if (onSubmission) onSubmission(res.data.verdict);
+    if (refreshStats && res.data.verdict && res.data.verdict.includes('Accepted')) {
+      refreshStats();
+    }
   };
 
   return (

@@ -8,7 +8,7 @@ import LightbulbIcon from '@mui/icons-material/Lightbulb';
 
 const HUGGINGFACE_API_KEY = process.env.REACT_APP_HF_API_KEY;
 
-function ProblemList() {
+function ProblemList({ refreshStats }) {
   const [problems, setProblems] = useState([]);
   const [selected, setSelected] = useState(null);
   const [error, setError] = useState('');
@@ -127,7 +127,7 @@ function ProblemList() {
           </ListItem>
         ))}
       </List>
-      {selected && <CodeSubmit problem={selected} onSubmission={(verdict) => {
+      {selected && <CodeSubmit problem={selected} refreshStats={refreshStats} onSubmission={(verdict) => {
         if (verdict === 'Accepted') fetchSolved();
       }} />}
       <Dialog open={hintOpen} onClose={() => setHintOpen(false)}>

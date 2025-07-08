@@ -19,29 +19,28 @@ function UserDashboard() {
     navigate('/');
   };
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      setLoading(true);
-      try {
-        const token = localStorage.getItem('token');
-        const [solvedRes, subRes] = await Promise.all([
-          axios.get('http://localhost:5000/api/problems/stats/solved-by-difficulty', { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get('http://localhost:5000/api/problems/stats/submissions-over-time', { headers: { Authorization: `Bearer ${token}` } })
-        ]);
-        // Pie chart data
-        const pie = ['Easy', 'Medium', 'Hard'].map(name => ({ name, value: solvedRes.data[name] || 0 }));
-        setPieData(pie);
-        // Bar chart data
-        const bar = Object.entries(subRes.data).map(([date, submissions]) => ({ date, submissions }));
-        setBarData(bar);
-      } catch (err) {
-        setPieData([]);
-        setBarData([]);
-      }
-      setLoading(false);
-    };
-    fetchStats();
-  }, []);
+  const fetchStats = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const [solvedRes, subRes] = await Promise.all([
+        axios.get('http://localhost:5000/api/problems/stats/solved-by-difficulty', { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get('http://localhost:5000/api/problems/stats/submissions-over-time', { headers: { Authorization: `Bearer ${token}` } })
+      ]);
+      // Pie chart data
+      const pie = ['Easy', 'Medium', 'Hard'].map(name => ({ name, value: solvedRes.data[name] || 0 }));
+      setPieData(pie);
+      // Bar chart data
+      const bar = Object.entries(subRes.data).map(([date, submissions]) => ({ date, submissions }));
+      setBarData(bar);
+    } catch (err) {
+      setPieData([]);
+      setBarData([]);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchStats(); }, []);
 
   return (
     <Box sx={{ mt: 5, mx: 'auto', maxWidth: 900 }}>
@@ -88,7 +87,7 @@ function UserDashboard() {
           </Grid>
         </Grid>
       )}
-      <ProblemList />
+      <ProblemList refreshStats={fetchStats} />
     </Box>
   );
 }
